@@ -117,7 +117,9 @@
     [(_ head:define-lhs with:with-clause rhs-part:expr ...+)
      (define-values {name-stx rhs-stx}
        (normalize-definition #`(define head rhs-part ...)
-                             #'λ))
+                             #'λ
+                             #t
+                             #t))
      (with-syntax ([name name-stx]
                    [rhs rhs-stx])
        #`(define name
@@ -190,7 +192,9 @@ Defining other-val!
              #:do [(define-values {lhs-stx rhs-stx}
                      (normalize-definition
                       #`(define head rhs-part ...)
-                      #'λ))]
+                      #'λ
+                      #t
+                      #t))]
              #:with lhs lhs-stx
              #:with rhs rhs-stx))
   (syntax-parse stx
