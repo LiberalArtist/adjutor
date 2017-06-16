@@ -173,6 +173,7 @@
        (begin (require spec.require-stx ...)
               (provide spec.provide-stx ...)))]))
 
+#|
 #;(module+ main
 
   #;(require-provide (except-in net/cookies/server
@@ -217,3 +218,4 @@ require-provide: expected root-module-path
   uuid-generate
     
   )
+|#

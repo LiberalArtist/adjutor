@@ -1,13 +1,16 @@
 #lang racket/base
 
-(require (for-syntax racket/base
+(require racket/contract
+         (for-syntax racket/base
                      syntax/parse
                      syntax/define
                      ))
 
 (provide define*
+         define*/contract
          def
-         )
+         (for-syntax function-header
+                     ))
 
 (module+ test
   (require rackunit
@@ -89,10 +92,7 @@
                           (syntax->list #'(spec.name ... rest-id)))
              "duplicate argument identifier"
              #:with arg-ids #'head.arg-ids))
-  )
-
-
-(define-syntax (define* stx)
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   (define-syntax-class define-lhs
     #:description #f
     #:attributes (name)
@@ -113,6 +113,10 @@
     ;#:no-delimit-cut
     (pattern (~seq #:with body:seq_definitions+expressions)
              #:attr body-list (attribute body.body-list)))
+  #|END begin-for-syntax|#)
+
+
+(define-syntax (define* stx)
   (syntax-parse stx
     [(_ head:define-lhs with:with-clause rhs-part:expr ...+)
      (define-values {name-stx rhs-stx}
@@ -128,6 +132,34 @@
              rhs)))]
     [(_ head:define-lhs rhs-part:expr ...+)
      #`(define head (let () rhs-part ...))]))
+
+(define-syntax (define*/contract stx)
+  (define-syntax-class contract
+    #:description "contract expression"
+    #:attributes {c}
+    (pattern cntct
+             #:declare cntct (expr/c #'contract?
+                                     #:name "contract expression")
+             #:with c #'cntct.c))
+  (syntax-parse stx
+    [(_ head:define-lhs
+        cntct:contract
+        with:with-clause
+        rhs-part:expr ...+)
+     (define-values {name-stx rhs-stx}
+       (normalize-definition #`(define head rhs-part ...)
+                             #'λ
+                             #t
+                             #t))
+     (with-syntax ([name name-stx]
+                   [rhs rhs-stx])
+       #`(define/contract name
+           cntct.c
+           (let ()
+             #,@(attribute with.body-list)
+             rhs)))]
+    [(_ head:define-lhs cntct:contract rhs-part:expr ...+)
+     #`(define/contract head cntct.c (let () rhs-part ...))]))
 
 #|
 (define* ((plain) n)
