@@ -5,6 +5,7 @@
                      ))
 
 (provide require-provide
+         provide-only
          (for-syntax require-provide-transformer
                      simple-require-provide-transformer
                      require-provide-spec
@@ -172,6 +173,13 @@
      (syntax/loc stx
        (begin (require spec.require-stx ...)
               (provide spec.provide-stx ...)))]))
+
+(define-syntax provide-only
+  (require-provide-transformer
+     (syntax-parser
+       [(_ mod:module-path ...)
+        (values #'(combine-in)
+                #'(all-from-out mod ...))])))
 
 #|
 #;(module+ main

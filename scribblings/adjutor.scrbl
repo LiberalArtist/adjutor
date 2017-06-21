@@ -15,8 +15,13 @@
 Adjutor is a library of (mostly) small, useful utilities
 that I have found myself wanting in many different projects.
 
-While I have no intention of breaking things, this library
-should be regarded as experimental in nature.
+Most of this library should be regarded as stable (I rely on it
+as stable in a number of different projects), but those portions
+documented under @secref["Experimental"]
+are, as one might guess, experimental and/or under development.
+
+Bug reports, suggestions, and pull requests are welcome via email
+or on @hyperlink["https://github.com/LiberalArtist/adjutor"]{GitHub}.
 
 @(define make-adjutor-eval
    (make-eval-factory '(adjutor racket/contract racket/match)))
@@ -75,17 +80,17 @@ should be regarded as experimental in nature.
            val2]
 }
 
+@defproc[(any->boolean [x any/c])
+         boolean?]{
+ Returns @racket[#t] for any input but @racket[#f].
+}
+
 @defform[(define-alias new-id orig-id)]{
  Short for @racket[(define-syntax new-id (make-rename-transformer #'orig-id))]
 }
 
 @defform[(define-aliases [new-id orig-id] ...+)]{
  Short for multiple @racket[define-alias] forms.
-}
-
-@defproc[(any->boolean [x any/c])
-         boolean?]{
- Returns @racket[#t] for any input but @racket[#f].
 }
 
 @defform[(define* define-lhs maybe-with-clause body ...+)
@@ -143,12 +148,12 @@ should be regarded as experimental in nature.
 
 
 
-@;section{@tt{require-provide}: Abbreviations for Re-Exporting}
-@;defmodule[adjutor/require-provide]
+@section{@racket[require-provide]: Abbreviations for Re-Exporting}
 
 @defform[#:literals (only-in except-in prefix-in rename-in 
                              only-meta-in except-out rename-out prefix-out
-                             for-syntax for-template for-label for-meta)
+                             for-syntax for-template for-label for-meta
+                             provide-only)
          (require-provide require-provide-spec ...)
          #:grammar ([require-provide-spec
                      module-path
@@ -161,7 +166,8 @@ should be regarded as experimental in nature.
                      (prefix-in prefix require-provide-spec)
                      (rename-in require-provide-spec
                                 [orig-id in-id] ...)
-                     (only-meta-in phase-level require-provide-spec)]
+                     (only-meta-in phase-level require-provide-spec)
+                     (provide-only module-path ...)]
                     [adjust-provide
                      (except-out require-provide-spec excluded-id ...)
                      (rename-out require-provide-spec
@@ -171,7 +177,7 @@ should be regarded as experimental in nature.
                      (for-syntax require-provide-spec ...)
                      (for-template require-provide-spec ...)
                      (for-label require-provide-spec ...)
-                     (for-meta require-provide-spec ...)]
+                     (for-meta phase-level require-provide-spec ...)]
                     [id-maybe-renamed orig-id [orig-id renamed]])]{
  In the simplest case, when @racket[require-provide-spec] is
  a plain @racket[module-path] (as specified by @racket[require]
@@ -181,17 +187,64 @@ should be regarded as experimental in nature.
    (provide (all-from-out module-path ...)))
 
  Other kinds of @racket[require-provide-spec] adjust what is
- @racket[require]d, @racket[provide]d, or both.
- @;{examples[#:eval (make-adjutor-eval) ;"provide: not at module level"
-  (require-provide (prefix-in : racket/stream)
-  (prefix-out : racket/string))
-  (:stream 1 2 3)
-  (string-join '("Works without a prefix here, "
-  "but exported with a prefix.")
-  " ")]}
+ @racket[require]d, @racket[provide]d, or both. Note that a few have a
+ subtly different grammar than when used with @racket[require] or @racket[provide].
+ All are recognized by binding, rather than symbolically.
+
+ For details on @racket[derived-require-provide-spec] (i.e. programmer-implemented
+ extensions to @racket[require-provide]), see @secref["Extending_require-provide"]
+ below, but note that the extension mechanism is unstable and subject to change.
+ 
+ @examples[#:eval (make-adjutor-eval) @;"provide: not at module level"
+           (module example racket/base
+             (require adjutor)
+             (require-provide (provide-only adjutor)
+                              (prefix-in : racket/stream)
+                              (prefix-out : racket/string))
+             (:stream 1 2 3)
+             (string-join '("Works without a prefix here,"
+                            "but exported with a prefix.")
+                          " "))
+           (require 'example)
+           (string-when #t
+             (:string-join '("Here," "it has a prefix")
+                           " "))
+           (:stream "Still has a prefix")]
 }
 
-@section{Structures}
+@defform[(provide-only module-path ...)]{
+ The @racket[provide-only] form cooperates with @racket[require-provide]
+ to export all bindings from each @racket[module-path], which should have been
+ used in a @racket[require] form elsewhere.
+
+ This might be desireable when a module is re-exporting bindings from a number of
+ other modules via @racket[require-provide], but also wants to export bindings from
+ some module which it had to import via @racket[require], perhaps because that
+ module gave it the @racket[require-provide] binding itself.
+ Thus, for example,
+ @racketblock[(require adjutor)
+              (require-provide (provide-only adjutor))]
+ could be used as an alternative to
+ @racketblock[(require adjutor)
+              (provide (all-from-out adjutor))]
+
+ Use of @racket[provide-only] outside of a @racket[require-provide] form
+ is a syntax error.
+}
+
+
+
+
+@section{Experimental}
+
+Unlike the preceding, features documented in this section are experimental
+and/or under development and are subject to breaking changes without notice.
+
+I obviously don't intend to break things gratuitously, but I suggest that before
+using these features in production code you check with me about their status
+or, in the worst-case scenario, fork the library.
+
+@subsection{Structures}
 
 @defform[(struct/derived
           (error-id orig-form ...)
@@ -299,7 +352,7 @@ should be regarded as experimental in nature.
 
 
 
-@section{Extending @racket[require-provide]}
+@subsection{Extending @racket[require-provide]}
 
 The bindings in this section are provided @racket[for-syntax]
 to be used in implementing extensions to @racket[require-provide].

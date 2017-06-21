@@ -5,10 +5,8 @@
                      syntax/parse
                      ))
 
-(provide (all-from-out "require-provide.rkt")
-         )
-
-(require-provide "kernel.rkt"
+(require-provide (provide-only "require-provide.rkt")
+                 "kernel.rkt"
                  "define-star.rkt"
                  "structure.rkt"
                  )
