@@ -44,27 +44,36 @@ or on @hyperlink["https://github.com/LiberalArtist/adjutor"]{GitHub}.
        body-or-break ... body)))
 }
 
-@defform[(string-when test body ...+)]{
- Like @racket[when], but returns @racket[""] (rather than
- @racket[(void)]) when @racket[test] is @racket[#f].
- The @racket[body]
- expression is only evaluated when @racket[test] passes.
+@deftogether[(@defform[(string-when test body ...+)]
+               @defform[(string-unless test body ...+)])]{
+ Like @racket[when] and @racket[unless], respectively,
+ but with @racket[""] (rather than
+ @void-const) as the default value when @racket[test] 
+ prevents the evaluation of the @racket[body] forms.
  @examples[#:eval (make-adjutor-eval)
            (string-when (= 1 1)
              "This is returned")
+           (string-unless (= 1 1)
+             "Default is returned")
            (string-when #f
              (+ 42 "This would be an error"))]
 }
 
-@defform[(list-when test body ...+)]{
- Like @racket[string-when], but returns @racket[null]
- when @racket[test] is @racket[#f].
+@deftogether[(@defform[(list-when test body ...+)]
+               @defform[(list-unless test body ...+)])]{
+ Like @racket[string-when] and @racket[string-unless],
+ respectively, but with @racket[null] as the default value.
  @examples[#:eval (make-adjutor-eval)
            (list-when (= 1 1)
              `(1 1 2 3 5 8))
+           (list-unless (= 1 1)
+             "Default is returned")
            (list-when #f
              (+ 42 "This would be an error"))]
 }
+
+
+
 
 @deftogether[(@defform[(values->list body ...+)]
                @defproc[(list->values [lst list?])

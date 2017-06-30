@@ -5,7 +5,9 @@
                      ))
 
 (provide string-when
+         string-unless
          list-when
+         list-unless
          any->boolean
          values->list
          list->values
@@ -21,21 +23,29 @@
            (submod "..")))
 
 (begin-for-syntax
-  (define (make-when-like-transformer default-stx)
-    (syntax-parser
-      [(_ (~describe #:opaque "test expression"
-                     test:expr)
-          (~describe #:opaque "body form"
-                     body:expr)
-          ...+)
-       #`(cond [test body ...]
-               [else #,default-stx])])))
+  (define (make-when+unless-like-transformers default-stx)
+    (values (syntax-parser
+              [(_ (~describe #:opaque "test expression"
+                             test:expr)
+                  (~describe #:opaque "body form"
+                             body:expr)
+                  ...+)
+               #`(cond [test body ...]
+                       [else #,default-stx])])
+            (syntax-parser
+              [(_ (~describe #:opaque "test expression"
+                             test:expr)
+                  (~describe #:opaque "body form"
+                             body:expr)
+                  ...+)
+               #`(cond [test #,default-stx]
+                       [else body ...])]))))
 
-(define-syntax string-when
-  (make-when-like-transformer #'""))
+(define-syntaxes {string-when string-unless}
+  (make-when+unless-like-transformers #'""))
 
-(define-syntax list-when
-  (make-when-like-transformer #''()))
+(define-syntaxes {list-when list-unless}
+  (make-when+unless-like-transformers #''()))
 
 
 (define (any->boolean x)
