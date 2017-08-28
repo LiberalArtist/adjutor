@@ -1,6 +1,7 @@
 #lang racket/base
 
 (require "require-provide.rkt"
+         racket/promise
          (for-syntax racket/base
                      syntax/parse
                      ))
@@ -26,3 +27,9 @@
                                        (channel-put error-chanel e)
                                        (raise e))])
             body ...)))]))
+
+(module+ test
+  (require rackunit)
+  (check-equal? (delay/thread/eager-errors
+                 42)
+                42))
