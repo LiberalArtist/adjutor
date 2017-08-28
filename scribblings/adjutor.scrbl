@@ -253,6 +253,14 @@ I obviously don't intend to break things gratuitously, but I suggest that before
 using these features in production code you check with me about their status
 or, in the worst-case scenario, fork the library.
 
+@defform[(delay/thread/eager-errors body ...+)]{
+ Like @racket[(delay/thread body ...)], but, if
+ forcing the promise would raise an exception
+ satisfying @racket[exn:fail?], the exception is also raised
+ asynchronously as soon as it is encountered in the background
+ thread.
+}
+
 @subsection{Structures}
 
 @defform[(struct/derived
