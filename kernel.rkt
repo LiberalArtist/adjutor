@@ -15,6 +15,8 @@
          define-aliases
          for/fold/define
          for*/fold/define
+         for/lists/define
+         for*/lists/define
          )
 
 
@@ -102,3 +104,25 @@
                               body ...)))]))
     (values (make-for/define #`for/fold/derived)
             (make-for/define #`for*/fold/derived))))
+
+
+
+(define-syntaxes {for/lists/define for*/lists/define}
+  (let ()
+    (define ((make-for/lists for/lists-id) stx)
+      (syntax-parse stx
+        [(_ (name:id ...)
+            (~describe "for clauses" clauses:expr)
+            body:expr ...+)
+         #:fail-when (check-duplicate-identifier
+                      (syntax->list #'(name ...)))
+         "duplicate variable name"
+         #:with for/*?lists for/lists-id
+         #`(define-values (name ...)
+             (for/*?lists (name ...)
+               clauses
+               body ...))]))
+    (values (make-for/lists #'for/lists)
+            (make-for/lists #'for*/lists))))
+
+

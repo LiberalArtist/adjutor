@@ -42,6 +42,40 @@ or on @hyperlink["https://github.com/LiberalArtist/adjutor"]{GitHub}.
      (for/fold ([accum-id init-expr] ...)
                (for-clause ...)
        body-or-break ... body)))
+  @examples[#:eval (make-adjutor-eval)
+            (for/fold/define ([keys '()]
+                              [vals '()])
+                             ([pr '([a . 1]
+                                    [b . 2]
+                                    [c . 3])])
+              (match pr
+                [(cons k v)
+                 (values (cons k keys)
+                         (cons v vals))]))
+            keys
+            vals]
+}
+
+@deftogether[(@defform[(for/lists/define (id ...)
+                         (for-clause ...)
+                         body-or-break ... body)]
+               @defform[(for*/lists/define (id ...)
+                         (for-clause ...)
+                         body-or-break ... body)])]{
+ Similar to @racket[for/lists] and @racket[for*/lists], respectively,
+ but binds each @racket[id] to the corresponding final result
+ of the iterations similarly to
+ @racket[for/fold/define] and @racket[for*/fold/define].
+ @examples[#:eval (make-adjutor-eval)
+           (for/lists/define (keys vals)
+                             ([pr '([a . 1]
+                                    [b . 2]
+                                    [c . 3])])
+              (match pr
+                [(cons k v)
+                 (values k v)]))
+           keys
+           vals]
 }
 
 @deftogether[(@defform[(string-when test body ...+)]
