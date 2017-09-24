@@ -42,26 +42,26 @@ or on @hyperlink["https://github.com/LiberalArtist/adjutor"]{GitHub}.
      (for/fold ([accum-id init-expr] ...)
                (for-clause ...)
        body-or-break ... body)))
-  @examples[#:eval (make-adjutor-eval)
-            (for/fold/define ([keys '()]
-                              [vals '()])
-                             ([pr '([a . 1]
-                                    [b . 2]
-                                    [c . 3])])
-              (match pr
-                [(cons k v)
-                 (values (cons k keys)
-                         (cons v vals))]))
-            keys
-            vals]
+ @examples[#:eval (make-adjutor-eval)
+           (for/fold/define ([keys '()]
+                             [vals '()])
+                            ([pr '([a . 1]
+                                   [b . 2]
+                                   [c . 3])])
+             (match pr
+               [(cons k v)
+                (values (cons k keys)
+                        (cons v vals))]))
+           keys
+           vals]
 }
 
 @deftogether[(@defform[(for/lists/define (id ...)
-                         (for-clause ...)
+                                         (for-clause ...)
                          body-or-break ... body)]
                @defform[(for*/lists/define (id ...)
-                         (for-clause ...)
-                         body-or-break ... body)])]{
+                                           (for-clause ...)
+                          body-or-break ... body)])]{
  Similar to @racket[for/lists] and @racket[for*/lists], respectively,
  but binds each @racket[id] to the corresponding final result
  of the iterations similarly to
@@ -71,9 +71,9 @@ or on @hyperlink["https://github.com/LiberalArtist/adjutor"]{GitHub}.
                              ([pr '([a . 1]
                                     [b . 2]
                                     [c . 3])])
-              (match pr
-                [(cons k v)
-                 (values k v)]))
+             (match pr
+               [(cons k v)
+                (values k v)]))
            keys
            vals]
 }
@@ -287,12 +287,46 @@ I obviously don't intend to break things gratuitously, but I suggest that before
 using these features in production code you check with me about their status
 or, in the worst-case scenario, fork the library.
 
-@defform[(delay/thread/eager-errors body ...+)]{
+@defform[(delay/thread/eager-errors option ... body ...+)
+         #:grammar ([option
+                     (code:line #:pred pred)
+                     (code:line #:handler handler)])
+         #:contracts ([pred (-> any/c any/c)]
+                      [handler (-> any/c any)])]{
  Like @racket[(delay/thread body ...)], but, if
  forcing the promise would raise an exception
- satisfying @racket[exn:fail?], the exception is also raised
- asynchronously as soon as it is encountered in the background
- thread.
+ satisfying @racket[pred] (which defaults to @racket[exn:fail?]),
+ @racket[handler] (which defaults to @racket[raise])
+ is called on the exception immediately in a background thread,
+ without waiting for a call to @racket[force].
+ Note that forcing a promise which raised such an exception
+ still re-raises the exception as usual.
+
+ Note that, because @racket[handler] is called in a new thread,
+ catching such exceptions can be subtle.
+
+ @examples[#:eval (make-adjutor-eval)
+           (require racket/promise)
+           (force (delay/thread/eager-errors 42))
+           (define example-promise
+             (with-handlers ([exn:fail? (λ (e) (displayln "Never gets here."))])
+               (delay/thread/eager-errors (error 'example))))
+           (code:comment "The background-raised exception doesn't show well in Scribble.")
+           (code:comment "Try this at the REPL.")
+           example-promise
+           (eval:error (force example-promise))]
+ @;{(define th
+  (thread (λ ()
+  (define th
+  (current-thread))
+  (delay/thread/eager-errors
+  #:handler (λ (e)
+  (eprintf "Caught an error. Breaking.")
+  (break-thread th))
+  (error 'caught))
+  (sleep 1)
+  (displayln "Never gets here."))))
+  (thread-wait th)]}
 }
 
 @subsection{Structures}
