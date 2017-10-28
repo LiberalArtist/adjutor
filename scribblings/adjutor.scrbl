@@ -287,6 +287,29 @@ I obviously don't intend to break things gratuitously, but I suggest that before
 using these features in production code you check with me about their status
 or, in the worst-case scenario, fork the library.
 
+@defform[(define/check-args function-header body ...+)]{
+ Like the function form of @racket[define], but actually defines a macro that
+ statically checks the number (and keywords) of arguments before expanding to
+ an application of the underlying function. The @racket[function-header]
+ uses the same syntax as @racket[define] (including curried functions, rest arguments,
+ etc.), except that a plain identifier is dissalowed, as @racket[define/check-args]
+ must be able to determine the required arguments at compile time.
+
+ The resulting function can still be used as a first-class value, but checking
+ only occurs for statically visible uses.
+
+ @examples[#:eval (make-adjutor-eval)
+           (eval:error
+            (define/check-args (recur arg)
+              (cond
+                [(pair? arg)
+                 (println (car arg))
+                 (code:comment "Oops! Forgot the arguments ...")
+                 (recur)] 
+                [else
+                 arg])))]
+}
+
 @defform[(delay/thread/eager-errors option ... body ...+)
          #:grammar ([option
                      (code:line #:pred pred)

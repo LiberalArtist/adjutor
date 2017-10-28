@@ -11,6 +11,7 @@
                  "kernel.rkt"
                  "define-star.rkt"
                  "structure.rkt"
+                 "check-args.rkt"
                  )
 
 (module+ test
