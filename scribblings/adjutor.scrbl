@@ -6,7 +6,7 @@
                       #:obfuscate? #t)]
 @defmodule[adjutor]
 
-@(require scribble/example
+@(require "utils.rkt"
           (for-label racket
                      adjutor
                      syntax/parse
@@ -22,9 +22,6 @@ are, as one might guess, experimental and/or under development.
 
 Bug reports, suggestions, and pull requests are welcome via email
 or on @hyperlink["https://github.com/LiberalArtist/adjutor"]{GitHub}.
-
-@(define make-adjutor-eval
-   (make-eval-factory '(adjutor racket/contract racket/match)))
 
 @deftogether[(@defform[(for/fold/define ([accum-id init-expr] ...)
                                         (for-clause ...)
@@ -278,229 +275,9 @@ or on @hyperlink["https://github.com/LiberalArtist/adjutor"]{GitHub}.
 
 
 
-@section{Experimental}
-
-Unlike the preceding, features documented in this section are experimental
-and/or under development and are subject to breaking changes without notice.
-
-I obviously don't intend to break things gratuitously, but I suggest that before
-using these features in production code you check with me about their status
-or, in the worst-case scenario, fork the library.
-
-@defform[(define/check-args function-header body ...+)]{
- Like the function form of @racket[define], but actually defines a macro that
- statically checks the number (and keywords) of arguments before expanding to
- an application of the underlying function. The @racket[function-header]
- uses the same syntax as @racket[define] (including curried functions, rest arguments,
- etc.), except that a plain identifier is dissalowed, as @racket[define/check-args]
- must be able to determine the required arguments at compile time.
-
- The resulting function can still be used as a first-class value, but checking
- only occurs for statically visible uses.
-
- @examples[#:eval (make-adjutor-eval)
-           (eval:error
-            (define/check-args (recur arg)
-              (cond
-                [(pair? arg)
-                 (println (car arg))
-                 (code:comment "Oops! Forgot the arguments ...")
-                 (recur)] 
-                [else
-                 arg])))]
-}
-
-@defform[(delay/thread/eager-errors option ... body ...+)
-         #:grammar ([option
-                     (code:line #:pred pred)
-                     (code:line #:handler handler)])
-         #:contracts ([pred (-> any/c any/c)]
-                      [handler (-> any/c any)])]{
- Like @racket[(delay/thread body ...)], but, if
- forcing the promise would raise an exception
- satisfying @racket[pred] (which defaults to @racket[exn:fail?]),
- @racket[handler] (which defaults to @racket[raise])
- is called on the exception immediately in a background thread,
- without waiting for a call to @racket[force].
- Note that forcing a promise which raised such an exception
- still re-raises the exception as usual.
-
- Note that, because @racket[handler] is called in a new thread,
- catching such exceptions can be subtle.
-
- @examples[#:eval (make-adjutor-eval)
-           (require racket/promise)
-           (force (delay/thread/eager-errors 42))
-           (define example-promise
-             (with-handlers ([exn:fail? (λ (e) (displayln "Never gets here."))])
-               (delay/thread/eager-errors (error 'example))))
-           (code:comment "The background-raised exception doesn't show well in Scribble.")
-           (code:comment "Try this at the REPL.")
-           example-promise
-           (eval:error (force example-promise))]
- @;{(define th
-  (thread (λ ()
-  (define th
-  (current-thread))
-  (delay/thread/eager-errors
-  #:handler (λ (e)
-  (eprintf "Caught an error. Breaking.")
-  (break-thread th))
-  (error 'caught))
-  (sleep 1)
-  (displayln "Never gets here."))))
-  (thread-wait th)]}
-}
-
-@subsection{Structures}
-
-@defform[(struct/derived
-          (error-id orig-form ...)
-          id maybe-super (field ...)
-          struct-option ...)
-         #:grammar ([maybe-super (code:line) super-id])]{
- Defines a new structure type like @racket[struct], but
- with syntax errors reported in terms of @racket[(error-id orig-form ...)]
- like @racket[define-struct/derived].
-
- See @racket[struct] for the grammar of @racket[field]
- and @racket[struct-option].
-}
-
-@defform[(structure id maybe-super (field ...)
-           option ...)
-         #:grammar ([maybe-super (code:line) super-id]
-                    [option structure-option restricted-struct-option]
-                    [structure-option
-                     (code:line #:constructor-contract contract-expr)
-                     (code:line #:constructor constructor-wrapper-expr)
-                     (code:line #:match-expander new-match-transformer)])
-         #:contracts
-         ([contract-expr contract?]
-          [constructor-wrapper-expr contract-expr]
-          [new-match-transformer
-           (code:line (-> syntax? syntax?) (code:comment "in the transformer environment"))])]{
- In the simplest case, when no @racket[structure-option]s are
- given, defines a new structure type like @racket[struct],
- where a @racket[restricted-struct-option] is any option that can be given to
- @racket[struct] except for @racket[#:constructor-name],
- @racket[#:extra-constructor-name], @racket[#:name], and @racket[#:extra-name].
-
- Any @racket[structure-option]s that are given control the meaning of @racket[id].
-
- If a @racket[#:constructor] option is given, the @racket[constructor-wrapper-expr]
- is accessed instead of the default constructor when @racket[id] is used as an
- expression. The @racket[constructor-wrapper-expr] must satisfy the
- contract @racket[contract-expr] if a @racket[#:constructor-contract] option is given;
- otherwise, it is required to be a procedure. Inside the @racket[constructor-wrapper-expr],
- @racket[raw-constructor] can be used to access the default constructor.
-
- If a @racket[#:constructor-contract] option is given without a
- @racket[#:constructor] option, the default constructor is protected with
- the contract @racket[contract-expr].
- 
- If a @racket[#:match-expander] clause is given, the @racket[new-match-transformer]
- must be an expression in the transformer environment that produces a function from
- syntax to syntax. It is used instead of the default pattern-matching behavior when
- @racket[id] is used as a
- @tech[#:doc '(lib "scribblings/reference/reference.scrbl")]{match expander}.
- Inside the @racket[new-match-transformer], @racket[raw-match-transformation]
- can be used to implement transformers that expand to the default pattern-matching
- behavior.
-
- As with @racket[struct], @racket[id] can be used as a structure type transformer
- which can be used to define subtypes and cooperates with @racket[shared],
- @racket[struct-out], etc. (But note that a @racket[#:match-expander] clause
- contols @racket[id]'s cooperation with @racket[match].) For more detailed
- information about these uses of @racket[id], see
- @secref["structinfo" #:doc '(lib "scribblings/reference/reference.scrbl")].
- 
- @(nested
-   #:style 'inset
-   @defidform[raw-constructor]{
-  Within a @racket[#:constructor] clause of @racket[structure],
-  accesses the plain constructor for the structure type.
-  Illegal elsewhere.
- }
-   @defidform[raw-match-transformation]{
-  Within a @racket[#:match-expander] clause of @racket[structure],
-  accesses a function that accepts a syntax object of the shape
-  @racket[#'(_ pat ...)] and returns syntax for @racket[match]
-  that matches each @racket[pat] against the fields of the structure.
-  Illegal elsewhere.
-  })
-
- @examples[#:eval (make-adjutor-eval)
-           (require (for-syntax racket/base syntax/parse))
-           (structure point (x y z)
-             #:transparent
-             #:constructor (λ ([x 0] [y 0] [z 0])
-                             (raw-constructor x y z))
-             #:constructor-contract (->* {}
-                                         {real? real? real?}
-                                         point?)
-             #:match-expander (syntax-parser
-                                [(_ x y z)
-                                 (raw-match-transformation #'(_ x y z))]
-                                [(_ x y)
-                                 #'(point x y _)]
-                                [(_ x)
-                                 #'(point x _ _)]
-                                [(_)
-                                 #'(point _ _ _)]))
-           (match (point)
-             [(point x) x])
-           (struct-copy point (point 5)
-                        [z 42])
-           (eval:error (point #f))]
-}
 
 
-
-
-
-
-@subsection{Extending @racket[require-provide]}
-
-The bindings in this section are provided @racket[for-syntax]
-to be used in implementing extensions to @racket[require-provide].
-They are particularly experimental and subject to change.
-
-@defstruct*[simple-require-provide-transformer
-            ([proc (-> syntax? syntax?)])]{
- A @racket[simple-require-provide-transformer] contains a function @racket[proc]
- (perhaps created @racket[syntax-parser]) that specifies a simple
- macro-like rewrite rule. Like a macro, @racket[proc] is called with the
- parenthesized form beginning with the identifier
- bound to the transformer itself. Its result must be a
- @racket[require-provide-spec].
-}
-
-@defstruct*[require-provide-transformer
-            ([proc (-> syntax?
-                       (values syntax? syntax?))])]{
- A @racket[require-provide-transformer] is like a 
- @racket[simple-require-provide-transformer], but more general.
- Its @racket[proc] returns two syntax objects: the first must be a valid
- @racket[require-spec] for use with @racket[require], and the second must
- be a @racket[provide-spec] for use with @racket[provide].
-}
-
-@deftogether[(@defidform[#:kind "syntax class" module-path]
-               @defidform[#:kind "syntax class" phase-level])]{
- Syntax classes recognizing the grammer for module paths and phase levels as
- specified by @racket[require] and @racket[provide].
-}
-
-@defidform[#:kind "syntax class" require-provide-spec]{
- A syntax class recognizing the grammar documented under @racket[require-provide],
- including @racket[derived-require-provide-spec]s created with
- @racket[require-provide-transformer] or @racket[simple-require-provide-transformer].
- It has two attributes @racket[require-stx] and @racket[provide-stx], which
- are the syntax to be passed on to @racket[require] and @racket[provide], respectively.
-}
-
-
+@include-section["experimental.scrbl"]
 
 
 
