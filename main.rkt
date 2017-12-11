@@ -14,6 +14,7 @@
                  "check-args.rkt"
                  "find-executable-path.rkt"
                  "in-value-star.rkt"
+                 "rx.rkt"
                  )
 
 (module+ test
@@ -23,6 +24,7 @@
 
 (provide delay/thread/eager-errors
          )
+
 
 (define-syntax delay/thread/eager-errors
   (syntax-parser

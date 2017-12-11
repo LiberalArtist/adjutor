@@ -125,6 +125,28 @@ or on @hyperlink["https://github.com/LiberalArtist/adjutor"]{GitHub}.
  Returns @racket[#t] for any input but @racket[#f].
 }
 
+@deftogether[(@defproc*[([(rx [#:handler handler (or/c #f (-> any/c any)) #f]
+                              [arg string?] ...)
+                          regexp?]
+                         [(rx [#:handler handler (or/c #f (-> any/c any)) #f]
+                              [arg bytes?] ...+) byte-regexp?])]
+               @defproc*[([(px [#:handler handler (or/c #f (-> any/c any)) #f]
+                               [arg string?] ...) pregexp?]
+                          [(px [#:handler handler (or/c #f (-> any/c any)) #f]
+                               [arg bytes?] ...+) byte-pregexp?])])]{
+ Functions that concatenate their arguments into a regular expression value.
+ A @racket[handler], if given, used as with @racket[regexp] etc.
+ 
+ As a special case, in an application visible at compile-time
+ when every @racket[arg] is a literal string or byte string, the regular
+ expression value is generated at compile time rather than runtime.
+ In this case, any @racket[handler] expression is not even evaluated:
+ instead, a compile-time error is raised if the arguments are invalid.
+
+ These functions are particularly designed for use with the
+ @secref["reader" #:doc '(lib "scribblings/scribble/scribble.scrbl")].
+}
+
 @defform[(infix: left op right)]{
  Provides infix notation for binary operators, expanding to
  @racket[(op left right)].
@@ -257,7 +279,7 @@ or on @hyperlink["https://github.com/LiberalArtist/adjutor"]{GitHub}.
            (define seq
              (in-value* "apples" "peaches" "pears"))
            (for/list ([(a b c) (in-value*/generator seq)])
-              (string-append a " & " b " & " c))]
+             (string-append a " & " b " & " c))]
 }
 
 @defform[(in-value*/expression body-expr)]{
