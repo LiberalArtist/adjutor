@@ -56,8 +56,8 @@ or, in the worst-case scenario, fork the library.
              (+ a b c))
            (eval:error
             (for/first ([(x y) (in-match '(1 2)
-                                          (list x z))])
-               (+ x y)))]
+                                         (list x z))])
+              (+ x y)))]
 }
 
 @defform[(define/check-args function-header body ...+)]{
@@ -81,6 +81,15 @@ or, in the worst-case scenario, fork the library.
                  (recur)] 
                 [else
                  arg])))]
+}
+
+@defform[(define/check-args/contract function-header contract-expr body ...+)
+         #:contracts ([contract-expr contract?])]{
+ Like @racket[define/check-args], but the resulting function is additionally
+ protected by the contract @racket[contract-expr].
+ Unlike @racket[define/contract], blame is assigned to the module where
+ the function is used (not necessarily the module where it is defined),
+ facilitating the export of the identifier bound by @racket[define/check-args/contract].
 }
 
 @defform[(delay/thread/eager-errors option ... body ...+)

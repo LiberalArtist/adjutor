@@ -1,6 +1,8 @@
 #lang racket/base
 
-(require (for-syntax racket/base
+(require racket/contract
+         syntax/location
+         (for-syntax racket/base
                      adjutor/kernel
                      racket/match
                      syntax/parse
@@ -14,6 +16,7 @@
            (submod "..")))
 
 (provide define/check-args
+         define/check-args/contract
          )
 
 (begin-for-syntax
@@ -113,7 +116,7 @@
               #`(first-class-name #,@(cdr (syntax-e stx)))]
              [first-class:id
               #'first-class-name]))
-         (define first-class-name rhs) )]))
+         (define first-class-name rhs))]))
 
 (module+ test
   (define/check-args (foo reqd [opt #t] #:kw r-kw #:opt [opt-kw #t])
@@ -182,13 +185,64 @@
   #|END module+ test|#)
 
 
-#;(define/check-args (recur arg)
-                    (cond
-                      [(pair? arg)
-                       (println (car arg))
-                       (recur)] ; error
-                      [else
-                       arg]))
 
+(define-syntax define/check-args/contract
+  (syntax-parser
+    [(_ spec:function-header cntct-expr body:expr ...+)
+     #:declare cntct-expr (expr/c #'contract?
+                             #:name "contract expression")
+     #:do [(define-values {name-stx rhs-stx}
+             (normalize-definition #`(define spec body ...)
+                                   #'λ
+                                   #t
+                                   #t))]
+     #:with name name-stx
+     #:with first-class-name (generate-temporary name-stx)
+     #:with rhs rhs-stx
+     (match-define (args-info required optional required-kws optional-kws)
+       (kinds-list->args-info (attribute spec.kinds-list)))
+     #`(begin
+         ;macro must be defined first to work at the REPL
+         (define-syntax-rule (first-class/contracted effective-name srcloc)
+           (contract cntct
+                 first-class-name
+                 '(definition effective-name)
+                 (quote-module-name)
+                 'effective-name
+                 srcloc))
+         (define-syntax (name stx)
+           (syntax-parse stx
+             [(effective-name:id
+               (~alt (~between (~seq _:expr)
+                                 #,required
+                                 #,(+ required optional)
+                                 #:name "by-position argument"
+                                 #:too-few "too few by-position arguments"
+                                 #:too-many "too many by-position arguments")
+                       #,@(for/list ([kw-stx (in-list required-kws)])
+                            (define datum (syntax->datum kw-stx))
+                            #`(~once (~seq #,kw-stx _:expr)
+                                     #:name #,(format "keyword argument ~a" datum)
+                                     #:too-few #,(format "missing required keyword argument ~a" datum)
+                                     #:too-many #,(format "illegally repeated keyword argument ~a" datum)))
+                       #,@(for/list ([kw-stx (in-list optional-kws)])
+                            (define datum (syntax->datum kw-stx))
+                            #`(~optional (~seq #,kw-stx _:expr)
+                                         #:name #,(format "keyword argument ~a" datum)
+                                         #:too-many #,(format "illegally repeated keyword argument ~a" datum))))
+                 (... ...))
+              #`((first-class/contracted effective-name (quote-srcloc #,stx)) #,@(cdr (syntax-e stx)))]
+             [effective-name:id
+              #`(first-class/contracted effective-name (quote-srcloc #,stx))]))
+         (define cntct cntct-expr.c)
+         (define first-class-name rhs))]))
 
-     
+#;
+[
+(define/check-args/contract (num-identity x)
+  (-> number? number?)
+  x)
+
+(module+ main
+  (num-identity #f))
+]
