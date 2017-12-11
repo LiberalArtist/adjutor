@@ -125,6 +125,26 @@ or on @hyperlink["https://github.com/LiberalArtist/adjutor"]{GitHub}.
  Returns @racket[#t] for any input but @racket[#f].
 }
 
+@defform[(infix: left op right)]{
+ Provides infix notation for binary operators, expanding to
+ @racket[(op left right)].
+
+ Infix notation is often useful, especially for noncommutative
+ binary operators like @racket[<].
+ Racket supports reader-based infix notation by default,
+ so you can write @racket[(1 . < . 2)].
+ However, a disadvantage of this notation for those used to reading
+ Racket syntax is that the beginning of the s-expression doesn't
+ make it obvious that infix notation is being used.
+ This is particularly a problem when the expression immediately
+ following the @litchar{(} is more complex than @racket[1], as
+ it might be confused with a function or macro application.
+
+ This macro provides an alternative infix notation specialized for
+ the common case of binary operators, allowing the above expression
+ to be written as @racket[(infix: 1 < 2)].
+}
+
 @defform[(define-alias new-id orig-id)]{
  Short for @racket[(define-syntax new-id (make-rename-transformer #'orig-id))]
 }
@@ -185,6 +205,92 @@ or on @hyperlink["https://github.com/LiberalArtist/adjutor"]{GitHub}.
            fruits]
 }
 
+@(define-syntax-rule (performance-note who)
+   @list{An @racket[who] application can provide better performance
+ when it appears directly in a @racket[for] clause.})
+
+@defproc[(in-value* [expr any/c] ...)
+         (and/c sequence? in-value*-record?)]{
+ Produces a sequence which is similar to those produced by @racket[in-value]
+ in that it has only a single element; however, whereas @racket[in-value]
+ produces single-valued sequences, the sequence produced by @racket[in-value*]
+ has as many values as there are @racket[expr] expressions.
+
+ In other words, if @racket[in-value] is "useful for @racket[let]-like bindings in forms
+ such as @racket[for*/list]", @racket[in-value*] is useful for
+ @racket[let-values]-like bindings.
+
+ @(performance-note in-value*)
+
+ @examples[#:eval (make-adjutor-eval)
+           (for/list ([(a b c) (in-value* 1 2 3)])
+             (vector a b c))
+           (define seq
+             (in-value*))
+           seq
+           (for/first ([() seq])
+             '|This works|)]
+                       
+}
+
+@deftogether[(@defproc[(in-value*/generator [generator (or/c (-> any) in-value*-record?)])
+                       (and/c sequence? in-value*-record?)]
+               @defproc[(in-value*-record? [v any/c]) any/c])]{
+ The function @racket[in-value*/generator] creates a single-element,
+ potentially-multi-valued sequence like @racket[in-value*],
+ where the values are determined by @racket[generator].
+ If @racket[generator] is a thunk, the values are the results of calling @racket[generator].
+ Otherwise, @racket[generator] must be a sequence constructed using
+ @racket[in-value*], @racket[in-value*/expression], or @racket[in-value*/generator],
+ in which case @racket[generator] is returned directly (but potentially with
+ a performance advantage when used directly in a @racket[for] clause).
+ Sequences that may be used for @racket[generator] are recognized by the predicate
+ @racket[in-value*-record?].
+ 
+ @(performance-note in-value*/generator) 
+
+ @examples[#:eval (make-adjutor-eval)
+           (define (gen)
+             (values "apples" "peaches" "pears"))
+           (for/list ([(a b c) (in-value*/generator gen)])
+             (string-append a " & " b " & " c))
+           (define seq
+             (in-value* "apples" "peaches" "pears"))
+           (for/list ([(a b c) (in-value*/generator seq)])
+              (string-append a " & " b " & " c))]
+}
+
+@defform[(in-value*/expression body-expr)]{
+ Creates a sequence that is conceptually equivalent to
+ @racket[(in-value*/generator (λ () body-expr))].
+ Note that this means that @racket[body-expr] is evaluated each time
+ the resulting sequence is 
+ @tech[#:key "initiate" #:doc '(lib "scribblings/reference/reference.scrbl")]{
+  initiated}.
+ 
+ @(performance-note in-value*/expression) Using @racket[in-value*/expression]
+ may also have advantages over @racket[in-value*/generator] in such cases.
+
+ @examples[#:eval (make-adjutor-eval)
+           (define seq
+             (in-value*/expression
+              (current-inexact-milliseconds)))
+           (for/first ([msec seq])
+             msec)
+           (for*/list ([task `([1 1 2]
+                               [4 5]
+                               [5 5 3]
+                               [15 35 8])]
+                       [(a b c) (in-value*/expression
+                                 (match task
+                                   [(list a b c)
+                                    (values a b c)]
+                                   [(list a b)
+                                    (values a b 0)]))])
+             (- (+ a b) c))
+           (for/first ([msec seq])
+             msec)]
+}
 
 
 

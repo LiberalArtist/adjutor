@@ -13,6 +13,7 @@
                  "structure.rkt"
                  "check-args.rkt"
                  "find-executable-path.rkt"
+                 "in-value-star.rkt"
                  )
 
 (module+ test

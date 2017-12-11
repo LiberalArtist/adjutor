@@ -17,12 +17,23 @@
          for*/fold/define
          for/lists/define
          for*/lists/define
+         infix:
          )
 
 
 (module+ test
   (require rackunit
            (submod "..")))
+
+(define-syntax infix:
+  (syntax-parser
+    [(_ left:expr op:expr right:expr)
+     #'(op left right)]
+    #; ; consider this
+    [(_ (~alt (~once (~seq #: rator:expr))
+              (~seq rand:expr))
+        ...)
+     #`(rator rand ...)]))
 
 (begin-for-syntax
   (define (make-when+unless-like-transformers default-stx)
@@ -90,7 +101,7 @@
       (pattern (b:binding ...)
                #:fail-when (check-duplicate-identifier
                             (syntax->list #'(b.var ...)))
-                           "duplicate variable name"
+               "duplicate variable name"
                #:with (var ...) #'(b.var ...)
                #:with (rhs ...) #'(b.rhs ...)))
     (define ((make-for/define derived-stx) stx)

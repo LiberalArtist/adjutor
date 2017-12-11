@@ -15,6 +15,51 @@ I obviously don't intend to break things gratuitously, but I suggest that before
 using these features in production code you check with me about their status
 or, in the worst-case scenario, fork the library.
 
+@defform[(in-match val-expr pat ...+)]{
+ A rather unusual form of sequence syntax which is only valid
+ directly in a @racket[for]-clause.
+ Using @racket[in-match] creates a single-element, potentially-multi-valued
+ sequence, somewhat like @racket[in-value*/expression], but its peculiar
+ characteristics make it better thought of as a way of turning a @racket[for]-clause
+ into a binding form like @racket[let-values] or @racket[match-define].
+
+ The @racket[val-expr] is an expression, and each @racket[pat] is a pattern
+ for @racket[match]: these are tried against the value of @racket[val-expr]
+ in the usual way. Each @racket[pat] must bind all of the identifiers bound
+ by the @racket[for]-clause, or an unbound identifier error will occur.
+ The @racket[for]-clause identifiers are bound to the values assosciated
+ with them by the first @racket[pat] which matches successfully.
+
+ Conceptually, the following @racket[for] forms written using @racket[in-match]
+ and @racket[in-value*/expression] are equivalent:
+ @racketblock[
+ (for ([(rslt-id ...) (in-match val-expr pat ...+)])
+   for-body ...+)
+ (for ([(rslt-id ...) (in-value*/expression
+                       (match val-expr
+                         [pat
+                          (values rslt-id ...)]
+                         ...))])
+   for-body ...+)]
+
+ Asside from brevity, the key advantage of @racket[in-match] is that
+ it installs the values of the @racket[rslt-id]s based on their names,
+ eliminating the requirement of getting them in the right order
+ in every @racket[match] clause, as one must with @racket[in-value*/expression].
+
+ @examples[#:eval (make-adjutor-eval)
+           (for*/list ([spec `([3 4 5]
+                               [10 20])]
+                       [(a b c) (in-match spec
+                                          (list a b c)
+                                          (list a (and b c)))])
+             (+ a b c))
+           (eval:error
+            (for/first ([(x y) (in-match '(1 2)
+                                          (list x z))])
+               (+ x y)))]
+}
+
 @defform[(define/check-args function-header body ...+)]{
  Like the function form of @racket[define], but actually defines a macro that
  statically checks the number (and keywords) of arguments before expanding to
