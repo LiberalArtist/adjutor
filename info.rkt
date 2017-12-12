@@ -3,13 +3,16 @@
 (define collection "adjutor")
 
 (define deps '("base"
-               "rackunit-lib"))
+               "rackunit-lib" ; why isn't this a build-dep?
+               "static-rename-lib"))
 
-(define build-deps '("scribble-lib" "racket-doc"))
+(define build-deps '("scribble-lib"
+                     "racket-doc"
+                     "rackunit-spec"
+                     "scribble-doc"))
 
 (define scribblings '(("scribblings/adjutor.scrbl"
-                       ()
-                       (experimental)
+                       (multi-page)
                        )))
 
 (define pkg-desc "A helper library")

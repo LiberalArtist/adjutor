@@ -3,7 +3,11 @@
 @title[#:version ""]{Experimental}
 
 @(require "utils.rkt"
-          (for-label racket
+          scribble/html-properties
+          (for-label (except-in racket
+                                #%top-interaction)
+                     (submod adjutor/test support)
+                     racket/enter
                      adjutor
                      syntax/parse
                      ))
@@ -14,6 +18,8 @@ and/or under development and are subject to breaking changes without notice.
 I obviously don't intend to break things gratuitously, but I suggest that before
 using these features in production code you check with me about their status
 or, in the worst-case scenario, fork the library.
+
+@section{Miscellaneous Utilities}
 
 @defform[(in-match val-expr pat ...+)]{
  A rather unusual form of sequence syntax which is only valid
@@ -60,38 +66,6 @@ or, in the worst-case scenario, fork the library.
               (+ x y)))]
 }
 
-@defform[(define/check-args function-header body ...+)]{
- Like the function form of @racket[define], but actually defines a macro that
- statically checks the number (and keywords) of arguments before expanding to
- an application of the underlying function. The @racket[function-header]
- uses the same syntax as @racket[define] (including curried functions, rest arguments,
- etc.), except that a plain identifier is dissalowed, as @racket[define/check-args]
- must be able to determine the required arguments at compile time.
-
- The resulting function can still be used as a first-class value, but checking
- only occurs for statically visible uses.
-
- @examples[#:eval (make-adjutor-eval)
-           (eval:error
-            (define/check-args (recur arg)
-              (cond
-                [(pair? arg)
-                 (println (car arg))
-                 (code:comment "Oops! Forgot the arguments ...")
-                 (recur)] 
-                [else
-                 arg])))]
-}
-
-@defform[(define/check-args/contract function-header contract-expr body ...+)
-         #:contracts ([contract-expr contract?])]{
- Like @racket[define/check-args], but the resulting function is additionally
- protected by the contract @racket[contract-expr].
- Unlike @racket[define/contract], blame is assigned to the module where
- the function is used (not necessarily the module where it is defined),
- facilitating the export of the identifier bound by @racket[define/check-args/contract].
-}
-
 @defform[(delay/thread/eager-errors option ... body ...+)
          #:grammar ([option
                      (code:line #:pred pred)
@@ -132,6 +106,40 @@ or, in the worst-case scenario, fork the library.
   (sleep 1)
   (displayln "Never gets here."))))
   (thread-wait th)]}
+}
+
+@section{Static Argument Checking}
+
+@defform[(define/check-args function-header body ...+)]{
+ Like the function form of @racket[define], but actually defines a macro that
+ statically checks the number (and keywords) of arguments before expanding to
+ an application of the underlying function. The @racket[function-header]
+ uses the same syntax as @racket[define] (including curried functions, rest arguments,
+ etc.), except that a plain identifier is dissalowed, as @racket[define/check-args]
+ must be able to determine the required arguments at compile time.
+
+ The resulting function can still be used as a first-class value, but checking
+ only occurs for statically visible uses.
+
+ @examples[#:eval (make-adjutor-eval)
+           (eval:error
+            (define/check-args (recur arg)
+              (cond
+                [(pair? arg)
+                 (println (car arg))
+                 (code:comment "Oops! Forgot the arguments ...")
+                 (recur)] 
+                [else
+                 arg])))]
+}
+
+@defform[(define/check-args/contract function-header contract-expr body ...+)
+         #:contracts ([contract-expr contract?])]{
+ Like @racket[define/check-args], but the resulting function is additionally
+ protected by the contract @racket[contract-expr].
+ Unlike @racket[define/contract], blame is assigned to the module where
+ the function is used (not necessarily the module where it is defined),
+ facilitating the export of the identifier bound by @racket[define/check-args/contract].
 }
 
 @section{Structures}
@@ -241,7 +249,67 @@ or, in the worst-case scenario, fork the library.
 
 @include-section["find-executable-path.scrbl"]
 
+@section{Testing Meta-Language}
+@defmodule[adjutor/test #:lang #:no-declare]
+@declare-exporting[(submod adjutor/test support)]
 
+The @racketmodname[adjutor/test] meta-language is useful for
+files that should only contain a @racket[test] submodule.
+It chains to the following language like @racketmodname[at-exp],
+then transforms the result of the other reader to place the
+body in a @racket[test] submodule, leaving the enclosing
+module empty. 
+It also arranges for a special @racket[#%top-interaction] for
+the enclosing module so that the REPL is inside the 
+@racket[test] submodule.
+
+To a first approximation, this is how a module using
+@(racket #,(hash-lang) #,(racketmodname adjutor/test))
+is read compared to some host language:
+@(define padding-attribute
+   (attributes '([style . "padding:0.5em;"])))
+@(tabular
+  #:column-properties '((right vcenter right-border) right-border ())
+  #:row-properties `((bottom-border ,padding-attribute)
+                     (bottom-border ,padding-attribute)
+                     ,padding-attribute)
+  #:cell-properties `([() center center]
+                      [() (left top) (left top)]
+                      [() (left top) (left top)])
+  (list
+   (list ""
+         (racket #,(hash-lang) #,(racketmodname adjutor/test))
+         "Host Language")
+   (list "Source "
+         (racketblock0
+          #,(hash-lang) #,(racketmodname adjutor/test) lang-spec
+          body ...)
+         (racketblock0
+          #,(hash-lang) lang-spec
+          body ...))
+   (list "Parsed "
+         (racketblock0
+          (module mod-name #,(racketmodname racket/base)
+            (module* test mod-lang
+              body ...)))
+         (racketblock0
+          (module mod-name mod-lang
+            body ...)))))
+
+@margin-note{
+ The main differences between the above table and the actual
+ implementation of @(racket #,(hash-lang) #,(racketmodname adjutor/test))
+ are that a private module language is used instead of
+ @racket[racket/base] (to provide a useful @racket[#%top-interaction])
+ and that a @racket[configure-runtime] submodule is added.
+}
+
+@defform[(#%top-interaction . form)]{
+ The @racket[#%top-interaction] installed for the enclosing module
+ by @(racket #,(hash-lang) #,(racketmodname adjutor/test))
+ is configured to always @racket[enter!] the @racket[test]
+ submodule before evaluating @racket[form].
+}
 
 @section{Extending @racket[require-provide]}
 
