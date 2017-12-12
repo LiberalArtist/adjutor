@@ -2,7 +2,7 @@
 
 (define collection "adjutor")
 
-(define deps '("base"
+(define deps '(("base" #:version "6.11")
                "rackunit-lib" ; why isn't this a build-dep?
                "static-rename-lib"))
 
