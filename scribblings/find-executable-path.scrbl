@@ -1,6 +1,7 @@
 #lang scribble/manual
 
 @title[#:version ""]{Extensions to @racket[find-executable-path]}
+@defmodule[adjutor/find-executable-path]
 
 @(require (for-label racket adjutor))
 

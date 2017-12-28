@@ -24,6 +24,10 @@
                                         immutable?)))]
           ))
 
+;;;;;; Even better:
+;;;;;; see https://github.com/purcell/exec-path-from-shell/blob/master/exec-path-from-shell.el
+
+
 (define (find-executable-path* program [related #f] [deepest? #f])
   (parameterize ([current-environment-variables (current-envvars-to-use)])
     (find-executable-path program related deepest?)))
@@ -137,4 +141,15 @@
   (bytes->immutable-bytes
   (bytes-join (map path->bytes l-paths)
               PATH-path-sep)))
+
+#;
+(parameterize ([current-input-port
+                (open-input-string "printf \"$PATH\"")])
+  (with-output-to-bytes
+   (λ ()
+     (system* (find-executable-path "bash")
+              "--login"))))
+
+
+
 
