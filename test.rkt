@@ -1,4 +1,4 @@
-#lang at-exp racket/base
+#lang racket/base
 
 (module reader racket/base
   (require syntax/module-reader
