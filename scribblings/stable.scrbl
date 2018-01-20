@@ -28,6 +28,10 @@ This section documents the stable portion of @racketmodname[adjutor].
      (for/fold ([accum-id init-expr] ...)
                (for-clause ...)
        body-or-break ... body)))
+
+ Note that the @racket[#:result] clause of @racket[for/fold] and @racket[for*/fold]
+ (added in Racket 6.11.0.1) is not currently supported.
+ 
  @examples[#:eval (make-adjutor-eval)
            (for/fold/define ([keys '()]
                              [vals '()])
@@ -52,6 +56,7 @@ This section documents the stable portion of @racketmodname[adjutor].
  but binds each @racket[id] to the corresponding final result
  of the iterations similarly to
  @racket[for/fold/define] and @racket[for*/fold/define].
+ 
  @examples[#:eval (make-adjutor-eval)
            (for/lists/define (keys vals)
                              ([pr '([a . 1]
