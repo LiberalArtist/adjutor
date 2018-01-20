@@ -14,7 +14,13 @@
 
 (module+ test
   (require rackunit
+           syntax/macro-testing
            (submod "..")))
+
+;; TODO: in-match can bind identifiers from the context of the expression
+;;   that are not bound by the match clauses.
+;;   Is that good or bad?
+;;   If bad, can it be solved by adding extra scopes?
 
 (struct in-value*-record (thunk maybe-count)
   #:property prop:sequence
@@ -222,21 +228,55 @@
      '(#(1 2))
      "check in-value*/expression under in-value*/generator")))
 
+(begin-for-syntax
+  (define-splicing-syntax-class bind-clause
+    #:description "#:bind clause"
+    (pattern (~seq #:bind [rslt:id ...]))))
+
 (define-sequence-syntax in-match
   (λ (stx)
-    (raise-syntax-error
-     #f
-     "only allowed immediatly inside a for clause"
-     stx))
+    (syntax-parse stx
+      [(_ val:expr bind:bind-clause pat ...+)
+       #'(let ([the-val val])
+           (in-value*/expression
+            (match/derived
+             the-val
+             #,stx
+             [pat
+              (values bind.rslt ...)]
+             ...)))]))
   (λ (stx)
     (syntax-parse stx
       #:context (sequence-syntax->context stx 'in-match)
-      [[(rslt:id ...) (~and stx (_ val:expr pat ...+))]
+      [[(rslt:id ...) (~and rhs-stx (_ val:expr bind:bind-clause pat ...+))]
+       (unless (equal? (length (syntax-e #'(rslt ...)))
+                       (length (syntax-e #'(bind.rslt ...))))
+         (raise-syntax-error
+          (sequence-syntax->context stx 'in-match)
+          "wrong number of results;\n number from #:bind clause does not match for-clause"
+          stx
+          #'rhs-stx))
        #`[(rslt ...)
           (:do-in
            ([(rslt ...) (match/derived
                          val
-                         stx
+                         rhs-stx
+                         [pat
+                          (values bind.rslt ...)]
+                         ...)])
+           #t
+           ()
+           #t
+           ()
+           #t
+           #f
+           [])]]
+      [[(rslt:id ...) (~and rhs-stx (_ val:expr pat ...+))]
+       #`[(rslt ...)
+          (:do-in
+           ([(rslt ...) (match/derived
+                         val
+                         rhs-stx
                          [pat
                           (values rslt ...)]
                          ...)])
@@ -256,6 +296,119 @@
                         (list a b c))])
      (vector a b c))
    '(#(1 2 3))
-   "check in-match"))
+   "check in-match")
+
+  (test-case
+   "in-match"
+   (define-simple-check (check-in-match form)
+     (equal? '(#(1 2 3))
+             form))
+
+   (check-in-match
+    (for/list ([(a b c) (in-match '(1 2 3)
+                                  (list a b c))])
+      (vector a b c))
+    "Use in for-clause without #:bind")
+
+   (check-in-match
+    (for/list ([(a b c) (in-match '(1 2 3)
+                                  #:bind [a b c]
+                                  (list a b c))])
+      (vector a b c))
+    "Use in for-clause with #:bind")
+
+   (check-in-match
+    (for/list ([(x y z) (in-match '(1 2 3)
+                                  #:bind [a b c]
+                                  (list a b c))])
+      (vector x y z))
+    "Use in for-clause with #:bind and different names")
+
+   (check-not-exn
+    (λ ()
+      (in-match '(1 2 3)
+                #:bind [a b c]
+                (list a b c)))
+    "Use outside a for-clause")
+
+   (define ms-seq
+     (in-match (current-inexact-milliseconds)
+               #:bind [it]
+               it))
+
+   (define old-ms
+     (for/first ([ms ms-seq])
+       ms))
+
+   (let ([seq
+          (in-match '(1 2 3)
+                    #:bind [a b c]
+                    (list a b c))])
+     (check-in-match
+      (for/list ([(x y z) seq])
+        (vector x y z))
+      "Use indirectly in for-clause")
+     (check-pred in-value*-record?
+                 seq
+                 "Should satisfy in-value*-record?")
+     (check-in-match
+      (for/list ([(x y z) (in-value*/generator seq)])
+        (vector x y z))
+      "Use with in-value*/generator"))
+
+   (check-equal? (for/first ([ms ms-seq])
+                   ms)
+                 old-ms
+                 "val-expr should be evaluated only once")
+   
+   (test-case
+    "syntax errors"
+
+    (check-exn
+     #rx"expected the literal #:bind"
+     (λ ()
+       (convert-syntax-error
+        (in-match '(1 2 3)
+                  (list a b c))))
+     "#:bind should be required outside for-clause")
+    (check-exn
+     #rx"^z: unbound identifier in module"
+     (λ ()
+       (convert-syntax-error
+        (in-match '(1 2 3)
+                  #:bind [a b z]
+                  (list a b c))))
+     "should require identifiers bound outside for-clause")
+ 
+    (check-exn
+     #rx"^z: unbound identifier in module"
+     (λ ()
+       (convert-syntax-error
+        (for/list ([(a b z) (in-match '(1 2 3)
+                                      (list a b c))])
+          (vector a b c))))
+     "should require identifiers bound inside for-clause")
+
+    (check-exn
+     #rx"^z: unbound identifier in module"
+     (λ ()
+       (convert-syntax-error
+        (for/list ([(a b c) (in-match '(1 2 3)
+                                      #:bind [a b z]
+                                      (list a b c))])
+          (vector a b c))))
+     "should require identifiers bound inside for-clause with #:bind")
+
+    (check-exn
+     #rx"wrong number of results"
+     (λ ()
+       (convert-syntax-error
+        (for/list ([(a b c) (in-match '(1 2 3)
+                                      #:bind [a b]
+                                      (list a b c))])
+          (vector a b c))))
+     "in for-clause, should check #:bind has correct number of results"))
+   #|END test-case in-match|#))
+
 
 

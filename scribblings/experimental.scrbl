@@ -21,38 +21,64 @@ or, in the worst-case scenario, fork the library.
 
 @section{Miscellaneous Utilities}
 
-@defform[(in-match val-expr pat ...+)]{
- A rather unusual form of sequence syntax which is only valid
- directly in a @racket[for]-clause.
+@defform[(in-match val-expr maybe-bind-clause pat ...+)
+         #:grammar ([maybe-bind-clause
+                     (code:line)
+                     (code:line #:bind [rslt-id ...])])]{
+ A rather unusual form of sequence syntax.
  Using @racket[in-match] creates a single-element, potentially-multi-valued
  sequence, somewhat like @racket[in-value*/expression], but its peculiar
  characteristics make it better thought of as a way of turning a @racket[for]-clause
- into a binding form like @racket[let-values] or @racket[match-define].
+ into a binding form like @racket[match-let-values] or @racket[match-define].
+
+ The @racket[maybe-bind-clause] is mandatory unless @racket[in-match]
+ is used directly within a @racket[for]-clause.
 
  The @racket[val-expr] is an expression, and each @racket[pat] is a pattern
  for @racket[match]: these are tried against the value of @racket[val-expr]
- in the usual way. Each @racket[pat] must bind all of the identifiers bound
- by the @racket[for]-clause, or an unbound identifier error will occur.
- The @racket[for]-clause identifiers are bound to the values assosciated
- with them by the first @racket[pat] which matches successfully.
+ in the usual way.
+ Each @racket[pat] must bind every @racket[rslt-id],
+ or an unbound identifier error will occur.
+ The values of the sequence are those bound to the @racket[rslt-id]s (in order)
+ by the first @racket[pat] which matches successfully.
 
- Conceptually, the following @racket[for] forms written using @racket[in-match]
+ Conceptually, the following sequences written using @racket[in-match]
  and @racket[in-value*/expression] are equivalent:
  @racketblock[
- (for ([(rslt-id ...) (in-match val-expr pat ...+)])
-   for-body ...+)
- (for ([(rslt-id ...) (in-value*/expression
-                       (match val-expr
-                         [pat
-                          (values rslt-id ...)]
-                         ...))])
-   for-body ...+)]
+ (in-match val-expr #:bind [rslt-id ...] pat ...+)
+ (let ([val val-expr])
+   (in-value*/expression
+    (match val
+      [pat
+       (values rslt-id ...)]
+      ...+)))]
 
  Asside from brevity, the key advantage of @racket[in-match] is that
  it installs the values of the @racket[rslt-id]s based on their names,
  eliminating the requirement of getting them in the right order
  in every @racket[match] clause, as one must with @racket[in-value*/expression].
 
+ As a special case, when @racket[in-match] is used directly within a
+ @racket[for]-clause, the @racket[maybe-bind-clause] may be omitted.
+ Omitting the @racket[maybe-bind-clause] is equivalent to using the same
+ identifiers bound by the @racket[for]-clause, so that the following are equivalent:
+ @racketblock[
+ (for ([(rslt-id ...) (in-match val-expr
+                                pat ...+)])
+   for-body ...+)
+ (for ([(rslt-id ...) (in-match val-expr
+                                #:bind [rslt-id ...]
+                                pat ...+)])
+   for-body ...+)]
+ 
+ If the @racket[maybe-bind-clause] is used inside a @racket[for]-clause,
+ it must bind the same number of values expected by the @racket[for]-clause;
+ otherwise, a syntax error is raised.
+
+ An @racket[in-match] application can provide better performance
+ when it appears directly in a @racket[for]-clause
+ (with or without a @racket[maybe-bind-clause]).
+ 
  @examples[#:eval (make-adjutor-eval)
            (for*/list ([spec `([3 4 5]
                                [10 20])]
@@ -60,6 +86,10 @@ or, in the worst-case scenario, fork the library.
                                           (list a b c)
                                           (list a (and b c)))])
              (+ a b c))
+           (for/list ([(x y) (in-match '(1 2)
+                                       #:bind [a b]
+                                       (list a b))])
+             (+ x y))
            (eval:error
             (for/first ([(x y) (in-match '(1 2)
                                          (list x z))])
