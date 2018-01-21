@@ -10,6 +10,7 @@
                      racket/enter
                      adjutor
                      syntax/parse
+                     racket/require
                      ))
 
 Unlike the preceding, features documented in this section are experimental
@@ -94,6 +95,15 @@ or, in the worst-case scenario, fork the library.
             (for/first ([(x y) (in-match '(1 2)
                                          (list x z))])
               (+ x y)))]
+}
+
+@defform[(multi subs ...+)
+         #:grammar ([subs sub-path (sub-path ...)]
+                    [sub-path rel-string id])]{
+ Like @racket[multi-in], but for use with @racket[require-provide].
+
+ @history[#:added "0.1"
+          ]
 }
 
 @defform[(delay/thread/eager-errors option ... body ...+)

@@ -2,10 +2,13 @@
 
 (require (for-syntax racket/base
                      syntax/parse
+                     racket/string
+                     racket/list
                      ))
 
 (provide require-provide
          provide-only
+         multi
          (for-syntax require-provide-transformer
                      simple-require-provide-transformer
                      require-provide-spec
@@ -180,6 +183,48 @@
        [(_ mod:module-path ...)
         (values #'(combine-in)
                 #'(all-from-out mod ...))])))
+
+
+
+
+(define-syntax multi
+  (require-provide-transformer
+   (λ (stx)
+     (define-syntax-class string-subs
+       #:attributes (l-sub-pths)
+       (pattern rel:str
+                #:attr l-sub-pths (list (syntax->datum #'rel)))
+       (pattern (rel:str ...)
+                #:attr l-sub-pths (syntax->datum #'(rel ...))))
+     (define-syntax-class id-subs
+       #:attributes (l-sub-pths)
+       (pattern rel:id
+                #:attr l-sub-pths (list #'rel))
+       (pattern (rel:id ...)
+                #:attr l-sub-pths (syntax-e #'(rel ...))))
+   (syntax-parse stx
+     [(_ sub:string-subs ...+)
+      (define l-stx
+        (for/list ([grp (in-list (apply cartesian-product
+                                        (attribute sub.l-sub-pths)))])
+          (datum->syntax stx (string-join grp "/"))))
+      (values #`(combine-in #,@l-stx)
+              #`(all-from-out #,@l-stx))]
+     [(_ sub:id-subs ...+)
+      (define l-stx
+        (for/list ([grp (in-list (apply cartesian-product
+                                        (attribute sub.l-sub-pths)))])
+          (datum->syntax
+           (car grp)
+           (string->symbol
+            (string-join (map (λ (id)
+                                (symbol->string
+                                 (syntax->datum id)))
+                              grp)
+                         "/")))))
+      (values #`(combine-in #,@l-stx)
+              #`(all-from-out #,@l-stx))]))))
+
 
 #|
 #;(module+ main
