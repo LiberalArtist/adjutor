@@ -17,6 +17,6 @@
 
 (define pkg-desc "A helper library")
 
-(define version "0.1")
+(define version "0.2")
 
 (define pkg-authors '(philip))

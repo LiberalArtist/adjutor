@@ -20,6 +20,8 @@ I obviously don't intend to break things gratuitously, but I suggest that before
 using these features in production code you check with me about their status
 or, in the worst-case scenario, fork the library.
 
+@include-section["link-change-evt.scrbl"]
+
 @section{Miscellaneous Utilities}
 
 @defform[(in-match val-expr maybe-bind-clause pat ...+)
