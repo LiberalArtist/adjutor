@@ -1,6 +1,7 @@
 #lang racket/base
 
-(require (for-syntax racket/base
+(require (only-in racket/contract integer-in)
+         (for-syntax racket/base
                      syntax/parse
                      ))
 
@@ -18,6 +19,7 @@
          for/lists/define
          for*/lists/define
          infix:
+         ip-port-num/c
          )
 
 
@@ -135,4 +137,8 @@
                body ...))]))
     (values (make-for/lists #'for/lists)
             (make-for/lists #'for*/lists))))
+
+
+(define ip-port-num/c
+  (integer-in 0 65535))
 

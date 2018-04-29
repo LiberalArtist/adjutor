@@ -143,6 +143,15 @@ This section documents the stable portion of @racketmodname[adjutor].
 }
 
 
+@defthing[ip-port-num/c flat-contract?
+          #:value (integer-in 0 65535)]{
+A contract recognizing legal IP port numbers.
+
+@(history
+ #:added "0.2.1"
+ )}
+
+
 @section{Regular Expressions}
 
 
