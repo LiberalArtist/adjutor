@@ -24,6 +24,18 @@ or, in the worst-case scenario, fork the library.
 
 @section{Miscellaneous Utilities}
 
+@defproc[(environment-variables-set* [env environment-variables?]
+                                     [key bytes-environment-variable-name?]
+                                     [value (or/c bytes-no-nuls? #f)]
+                                     ...
+                                     ...)
+         environment-variables?]{
+ Returns a fresh @tech[#:doc '(lib "scribblings/reference/reference.scrbl")]{
+  environment variable set} like @racket[env], but extended
+ with mappings from each given @racket[key] to the new
+ @racket[value].
+}
+
 @defform[(in-match val-expr maybe-bind-clause pat ...+)
          #:grammar ([maybe-bind-clause
                      (code:line)

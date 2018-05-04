@@ -16,6 +16,7 @@
                  "link-change-evt.rkt"
                  "in-value-star.rkt"
                  "rx.rkt"
+                 "misc.rkt"
                  )
 
 (module+ test
