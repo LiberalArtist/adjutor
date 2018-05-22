@@ -302,6 +302,7 @@ or, in the worst-case scenario, fork the library.
 
 
 @include-section["find-executable-path.scrbl"]
+@include-section["todo.scrbl"]
 
 @section{Testing Meta-Language}
 @defmodule[adjutor/test #:lang #:no-declare]
