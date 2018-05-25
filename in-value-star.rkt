@@ -372,7 +372,7 @@
                   (list a b c))))
      "#:bind should be required outside for-clause")
     (check-exn
-     #rx"^z: unbound identifier in module"
+     #rx"^z: unbound identifier"
      (λ ()
        (convert-syntax-error
         (in-match '(1 2 3)
@@ -381,7 +381,7 @@
      "should require identifiers bound outside for-clause")
  
     (check-exn
-     #rx"^z: unbound identifier in module"
+     #rx"^z: unbound identifier"
      (λ ()
        (convert-syntax-error
         (for/list ([(a b z) (in-match '(1 2 3)
@@ -390,7 +390,7 @@
      "should require identifiers bound inside for-clause")
 
     (check-exn
-     #rx"^z: unbound identifier in module"
+     #rx"^z: unbound identifier"
      (λ ()
        (convert-syntax-error
         (for/list ([(a b c) (in-match '(1 2 3)

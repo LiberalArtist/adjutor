@@ -140,7 +140,7 @@
              (λ () (convert-syntax-error (foo 1 #:kw 2 3 4))))
   (check-not-exn (λ () foo)
                  "first-class use compiles")
-  (check-exn #rx"application"
+  (check-exn #rx"application: required keyword argument|given procedure expects keyword arguments"
              (λ () (map foo '(1 2 3 4)))
              "bad higher-order use raises runtime error")
   
