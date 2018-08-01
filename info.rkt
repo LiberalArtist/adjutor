@@ -2,7 +2,7 @@
 
 (define collection "adjutor")
 (define pkg-desc "A helper library")
-(define version "0.2.4")
+(define version "0.2.5")
 (define pkg-authors '(philip))
 
 ;; Dependencies:

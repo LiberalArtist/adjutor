@@ -145,11 +145,11 @@ This section documents the stable portion of @racketmodname[adjutor].
 
 @defthing[ip-port-num/c flat-contract?
           #:value (integer-in 0 65535)]{
-A contract recognizing legal IP port numbers.
+ A contract recognizing legal IP port numbers.
 
-@(history
- #:added "0.2.1"
- )}
+ @(history
+   #:added "0.2.1"
+   )}
 
 
 @section{Regular Expressions}
@@ -239,6 +239,16 @@ A contract recognizing legal IP port numbers.
  Short for multiple @racket[define-alias] forms.
 }
 
+@section{Serialization}
+@deftogether[(@defproc[(serialize-to-string [v serializable?])
+                       (and/c string? immutable?)]
+               @defproc[(deserialize-from-string [str string?])
+                        any/c])]{
+ Like @racket[serialize] and @racket[deserialize], respectively,
+ but using a string for the serialized value. 
+                                 
+ @history[#:added "0.2.5"]
+}
 
 @section{Sequence Constructors}
 
