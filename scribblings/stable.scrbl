@@ -6,6 +6,7 @@
           (for-label racket
                      adjutor
                      syntax/parse
+                     racket/serialize
                      ))
 
 This section documents the stable portion of @racketmodname[adjutor].
