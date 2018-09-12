@@ -1,7 +1,8 @@
 #lang scribble/manual
 
 @title[#:version ""]{Extensions to @racket[find-executable-path]}
-@defmodule[adjutor/find-executable-path]
+@defmodule[adjutor/find-executable-path #:no-declare]
+@(declare-exporting adjutor/find-executable-path adjutor)
 
 @(require (for-label racket adjutor))
 
@@ -25,63 +26,34 @@ to address these cases at a higher level than manipulating
 
 @defproc[(find-executable-path* [program path-string?]
                                 [related (or/c path-string? #f) #f]
-                                [deepest? any/c #f])
+                                [deepest? any/c #f]
+                                [#:search search-directories (listof path?)
+                                 (current-executable-search-directories)])
          (or/c path? #f)]{
- Like @racket[find-executable-path], but uses a @tt{PATH} based on
- @racket[current-preferred-PATH-spec] rather than
- @racket[current-environment-variables].
+ Like @racket[find-executable-path], but searches based on
+ @racket[search-directories] rather than the value of
+ @racket[(environment-variables-ref (current-environment-variables) #"PATH")].
 }
 
-@deftogether[(@defparam[current-preferred-PATH-spec spec
-                        preferred-PATH-spec/c]
-               @defthing[preferred-PATH-spec/c contract?
-                         #:value
-                         (or/c 'inherit
-                               #f 
-                               bytes-no-nuls? 
-                               string-no-nuls?)])]{
- The parameter @racket[current-preferred-PATH-spec] controls the
- @tt{PATH} used by @racket[find-executable-path*].
- On platforms other than Mac OS, the default value is @racket['inherit].
+@defparam[current-executable-search-directories search-directories
+          (listof path?)]{
+ Specifies the list of directories to be searched
+ by @racket[find-executable-path*] when no @racket[#:search]
+ argument is provided.
+ The default value is platform-specific.
 
- On Mac OS, the default value is a byte string obtained by invoking
- Bash as a login shell and printing the @tt{PATH}.
- This allows the @tt{PATH} to be modified by the user's @tt{.bash_profile}
- and is consistent with the behavior of @tt{Terminal.app}.
+ On Mac OS, the default value is obtained by invoking
+ Bash as a login shell, printing the @tt{PATH}, and parsing the output.
+ This allows the @tt{PATH} to be modified by @filepath{~/.bash_profile},
+ @filepath{/etc/paths}, @filepath{/etc/paths.d/}, @etc
+ and is consistent with the behavior of @filepath{Terminal.app}.
 
- The derived parameter @racket[current-preferred-PATH] can be used to
- access the actual byte string which @racket[find-executable-path*] will
- use as the @tt{PATH}.
+ On all other platforms, the default value is currently obtained
+ by parsing the value of
+ @racket[(environment-variables-ref (current-environment-variables) #"PATH")]
+ when @racketmodname[adjutor/find-executable-path] is instantiated.
 
- The meaning of @racket[spec] is as follows:
- @itemlist[@item{A value of @racket['inherit] indicates that the @tt{PATH} from
-             @racket[current-environment-variables] should be used, in
-             which case @racket[find-executable-path*] will work just like
-             @racket[find-executable-path].
-            }
-           @item{A value of @racket[#f] means to use an environment with
-             no mapping for @tt{PATH}.
-            }
-           @item{A byte string satisfying @racket[bytes-no-nuls?] is
-             coerced to an immutable byte string and used as the @tt{PATH}.
-            }
-           @item{A string satisfying @racket[string-no-nuls?] is
-             coerced to an immutable string, and the @tt{PATH}
-             is the result of converting the string to an (immutable)
-             byte string using @racket[string->bytes/locale].
-             }]
-
- Support for additional kinds of @racket[spec] is planned for the future,
- in which case the @racket[preferred-PATH-spec/c] contract will be extended.
-}
-
-@defparam*[current-preferred-PATH spec
-           preferred-PATH-spec/c (or/c #f (and/c bytes-no-nuls?
-                                                 immutable?))]{
- An alternative interface to the same parameter as @racket[current-preferred-PATH-spec]
- (see @racket[make-derived-parameter]), but accesses the actual
- byte string which @racket[find-executable-path*] will
- use as the @tt{PATH} (or @racket[#f] if it will use an environment with
- no mapping for @tt{PATH}).
+ In the future, alternative ways of computing the default
+ value may be supported.
 }
            
