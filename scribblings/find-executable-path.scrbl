@@ -4,7 +4,7 @@
 @defmodule[adjutor/find-executable-path #:no-declare]
 @(declare-exporting adjutor/find-executable-path adjutor)
 
-@(require (for-label racket adjutor))
+@(require (for-label racket adjutor/find-executable-path))
 
 Racket provides @racket[find-executable-path] for finding the paths
 of executables (or related files/directories) based on the @tt{PATH}
@@ -52,6 +52,8 @@ to address these cases at a higher level than manipulating
  by parsing the value of
  @racket[(environment-variables-ref (current-environment-variables) #"PATH")]
  when @racketmodname[adjutor/find-executable-path] is instantiated.
+ On Windows, the default value begins with @racket[(bytes->path #".")]
+ for consistency with @racket[find-executable-path].
 
  In the future, alternative ways of computing the default
  value may be supported.
