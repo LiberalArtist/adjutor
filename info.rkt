@@ -6,7 +6,7 @@
 (define pkg-authors '(philip))
 
 ;; Dependencies:
-(define deps '(("base" #:version "6.11")
+(define deps '(("base" #:version "6.12")
                "rackunit-lib" ; why isn't this a build-dep?
                "static-rename-lib"))
 
