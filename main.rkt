@@ -12,7 +12,7 @@
                  "define-star.rkt"
                  "structure.rkt"
                  "check-args.rkt"
-                 ;"find-executable-path.rkt"
+                 "find-executable-path.rkt"
                  "serialize.rkt"
                  "link-change-evt.rkt"
                  "in-value-star.rkt"
