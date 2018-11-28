@@ -2,9 +2,6 @@ language: c
 
 # Based from: https://github.com/greghendershott/travis-racket
 
-# Optional: Remove to use Travis CI's older infrastructure.
-sudo: false
-
 env:
   global:
     # Supply a global RACKET_DIR environment variable. This is where
@@ -20,9 +17,11 @@ env:
     # Supply more than one RACKET_VERSION (as in the example below) to
     # create a Travis-CI build matrix to test against multiple Racket
     # versions.
+    - RACKET_VERSION=7.1
+    - RACKET_VERSION=HEAD
+    - RACKET_VERSION=HEADCS
     - RACKET_VERSION=6.12
     - RACKET_VERSION=7.0
-    - RACKET_VERSION=HEAD
 
 matrix:
   allow_failures:
@@ -35,7 +34,7 @@ before_install:
 - export PATH="${RACKET_DIR}/bin:${PATH}" #install-racket.sh can't set for us
 
 install:
- - raco pkg install --deps search-auto
+ - raco pkg install --auto --name adjutor
 
 before_script:
 
@@ -47,5 +46,5 @@ script:
 
 after_success:
  - raco setup --check-pkg-deps --pkgs adjutor
- - raco pkg install --deps search-auto cover cover-coveralls
+ - raco pkg install --auto cover cover-coveralls
  - raco cover -b -f coveralls -d $TRAVIS_BUILD_DIR/coverage .
