@@ -19,8 +19,7 @@
          for/lists/define
          for*/lists/define
          infix:
-         ip-port-num/c
-         )
+         ip-port-num/c)
 
 
 (module+ test
@@ -64,7 +63,7 @@
 
 
 (define (any->boolean x)
-  (not (not x)))
+  (and x #true))
 
 (define-syntax values->list
   (syntax-parser

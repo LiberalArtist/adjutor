@@ -1,5 +1,6 @@
 #lang info
 
+(define pkg-name "adjutor")
 (define collection "adjutor")
 (define pkg-desc "A helper library")
 (define version "0.2.6")
