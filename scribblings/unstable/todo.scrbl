@@ -4,7 +4,7 @@
 
 @(require adjutor
           (for-label adjutor
-                     ))
+                     adjutor/unstable))
 
 @defform*[[(TODO message)
            (TODO #:expr runtime-expr message)

@@ -2,15 +2,15 @@
 
 (require racket/match
          (for-syntax racket/base
-                     syntax/parse
-                     ))
+                     syntax/parse))
 
 (provide in-value*-record?
          in-value*
          in-value*/expression
-         in-value*/generator
-         in-match
-         )
+         in-value*/generator)
+
+(module+ unstable
+  (provide in-match))
 
 (module+ test
   (require rackunit

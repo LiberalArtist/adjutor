@@ -9,17 +9,16 @@
                      racket/struct-info
                      racket/stxparam
                      racket/contract
-                     adjutor/kernel
-                     ))
+                     "../kernel.rkt"))
+
+;; FIXME use the `struct/derived` from `racket/base` in Racket 7.6.
 
 (module+ test
   (require rackunit))
 
-(provide struct/derived
-         structure
+(provide structure
          raw-constructor
-         (for-syntax raw-match-transformation
-                     ))
+         (for-syntax raw-match-transformation))
 
 (begin-for-syntax
   (define-splicing-syntax-class constructor-name-clause

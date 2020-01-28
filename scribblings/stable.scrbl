@@ -5,9 +5,9 @@
 @(require "utils.rkt"
           (for-label racket
                      adjutor
+                     (only-in adjutor/unstable in-match)
                      syntax/parse
-                     racket/serialize
-                     ))
+                     racket/serialize))
 
 This section documents the stable portion of @racketmodname[adjutor].
 
@@ -152,6 +152,24 @@ This section documents the stable portion of @racketmodname[adjutor].
    #:added "0.2.1"
    )}
 
+@defproc[(environment-variables-set* [env environment-variables?]
+                                     [key bytes-environment-variable-name?]
+                                     [value (or/c bytes-no-nuls? #f)]
+                                     ...
+                                     ...)
+         environment-variables?]{
+ Returns a fresh @tech[#:doc '(lib "scribblings/reference/reference.scrbl")]{
+  environment variable set} like @racket[env], but extended
+ with mappings from each given @racket[key] to the new
+ @racket[value].
+
+ As with @racket[hash-set*], latter mappings for a given @racket[key]
+ overwrite earlier mappings.
+ 
+ @history[#:changed "0.3"
+          @elem{Moved from unstable.}]
+}
+
 
 @section{Regular Expressions}
 
@@ -254,7 +272,7 @@ This section documents the stable portion of @racketmodname[adjutor].
 @section{Sequence Constructors}
 
 In addition to the stable sequence constructors documented in this
-section, the experimental portion of @racket[adjutor] provides @racket[in-match].
+section, @racketmodname[adjutor/unstable] provides @racket[in-match].
 
 @(define-syntax-rule (performance-note who)
    @list{An @racket[who] application can provide better performance

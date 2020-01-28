@@ -1,9 +1,8 @@
 #lang racket/base
 
 (require racket/contract
-         racket/system
-         racket/match
-         )
+         (only-in racket/system bytes-no-nuls?)
+         racket/match)
 
 (provide (contract-out
           [environment-variables-set*

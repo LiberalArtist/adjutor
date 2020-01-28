@@ -2,8 +2,7 @@
 
 (require (only-in racket/contract integer-in)
          (for-syntax racket/base
-                     syntax/parse
-                     ))
+                     syntax/parse))
 
 (provide string-when
          string-unless

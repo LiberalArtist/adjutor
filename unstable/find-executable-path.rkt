@@ -15,6 +15,11 @@
                  #:search (listof path?)}
                 (or/c path? #f))]))
 
+#|
+NOTE: path-list-string->path-list is public now! use it!
+racket/base
+|#
+
 ;; Inspired by:
 ;; https://github.com/purcell/exec-path-from-shell/blob/master/exec-path-from-shell.el
 

@@ -3,22 +3,21 @@
 (require (for-syntax racket/base
                      syntax/parse
                      racket/string
-                     racket/list
-                     ))
+                     racket/list))
 
 (provide require-provide
-         provide-only
-         multi
-         (for-syntax require-provide-transformer
-                     simple-require-provide-transformer
-                     require-provide-spec
-                     phase-level
-                     module-path
-                     ))
+         provide-only)
+
+(module+ unstable
+  (provide multi
+           (for-syntax require-provide-transformer
+                       simple-require-provide-transformer
+                       require-provide-spec
+                       phase-level
+                       module-path)))
 
 (module syntax racket/base
-  (require racket/contract
-           )
+  (require racket/contract)
   (provide (contract-out
             [struct require-provide-transformer
               ([proc (-> syntax?

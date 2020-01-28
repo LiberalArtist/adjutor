@@ -4,6 +4,7 @@
 .DS_Store
 compiled/
 /doc/
+/scratch/
 scribblings/*.html
 scribblings/*.css
 scribblings/*.js

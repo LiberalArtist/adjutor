@@ -1,11 +1,12 @@
 #lang scribble/manual
 
 @title[#:version ""]{Detecting Symbolic Link Changes}
+@declare-exporting[adjutor/unstable]
 
-@(require "utils.rkt"
-          (for-label racket
+
+@(require (for-label racket
                      adjutor
-                     ))
+                     adjutor/unstable))
 
 
 @(define (filesystem-change-events)

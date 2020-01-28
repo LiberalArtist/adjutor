@@ -1,40 +1,39 @@
 #lang scribble/manual
 
-@title[#:version ""]{Experimental}
+@title[#:version ""]{Unstable}
+@defmodule[adjutor/unstable]
 
 @(require "utils.rkt"
           scribble/html-properties
           (for-label (except-in racket
                                 #%top-interaction)
-                     (submod adjutor/test support)
+                     (submod adjutor/unstable/test support)
                      racket/enter
                      adjutor
+                     adjutor/unstable
                      syntax/parse
-                     racket/require
-                     ))
+                     racket/require))
 
 Unlike the preceding, features documented in this section are experimental
 and/or under development and are subject to breaking changes without notice.
 
-I obviously don't intend to break things gratuitously, but I suggest that before
-using these features in production code you check with me about their status
-or, in the worst-case scenario, fork the library.
+I suggest that before using these features in production code
+you check with me about their status or, in the worst-case scenario,
+fork the library.
 
-@include-section["link-change-evt.scrbl"]
+@history[#:changed "0.3"
+         @elem{Moved experimental things to @racketmodname[adjutor/unstable]
+          to further clarify intent.
+          Removed @racketid[struct/derived] in anticipation of
+          Racket 7.6 (which will provide a @racket[struct/derived] from
+          @racket[racket/base]) and removed the ill-considered
+          @racketid[delay/thread/eager-errors].
+          Declared @racket[environment-variables-set*] stable.
+          }]
+
+@include-section["unstable/link-change-evt.scrbl"]
 
 @section{Miscellaneous Utilities}
-
-@defproc[(environment-variables-set* [env environment-variables?]
-                                     [key bytes-environment-variable-name?]
-                                     [value (or/c bytes-no-nuls? #f)]
-                                     ...
-                                     ...)
-         environment-variables?]{
- Returns a fresh @tech[#:doc '(lib "scribblings/reference/reference.scrbl")]{
-  environment variable set} like @racket[env], but extended
- with mappings from each given @racket[key] to the new
- @racket[value].
-}
 
 @defform[(in-match val-expr maybe-bind-clause pat ...+)
          #:grammar ([maybe-bind-clause
@@ -94,7 +93,7 @@ or, in the worst-case scenario, fork the library.
  when it appears directly in a @racket[for]-clause
  (with or without a @racket[maybe-bind-clause]).
  
- @examples[#:eval (make-adjutor-eval)
+ @examples[#:eval (make-adjutor/unstable-eval)
            (for*/list ([spec `([3 4 5]
                                [10 20])]
                        [(a b c) (in-match spec
@@ -120,47 +119,11 @@ or, in the worst-case scenario, fork the library.
           ]
 }
 
-@defform[(delay/thread/eager-errors option ... body ...+)
-         #:grammar ([option
-                     (code:line #:pred pred)
-                     (code:line #:handler handler)])
-         #:contracts ([pred (-> any/c any/c)]
-                      [handler (-> any/c any)])]{
- Like @racket[(delay/thread body ...)], but, if
- forcing the promise would raise an exception
- satisfying @racket[pred] (which defaults to @racket[exn:fail?]),
- @racket[handler] (which defaults to @racket[raise])
- is called on the exception immediately in a background thread,
- without waiting for a call to @racket[force].
- Note that forcing a promise which raised such an exception
- still re-raises the exception as usual.
 
- Note that, because @racket[handler] is called in a new thread,
- catching such exceptions can be subtle.
 
- @examples[#:eval (make-adjutor-eval)
-           (require racket/promise)
-           (force (delay/thread/eager-errors 42))
-           (define example-promise
-             (with-handlers ([exn:fail? (λ (e) (displayln "Never gets here."))])
-               (delay/thread/eager-errors (error 'example))))
-           (code:comment "The background-raised exception doesn't show well in Scribble.")
-           (code:comment "Try this at the REPL.")
-           example-promise
-           (eval:error (force example-promise))]
- @;{(define th
-  (thread (λ ()
-  (define th
-  (current-thread))
-  (delay/thread/eager-errors
-  #:handler (λ (e)
-  (eprintf "Caught an error. Breaking.")
-  (break-thread th))
-  (error 'caught))
-  (sleep 1)
-  (displayln "Never gets here."))))
-  (thread-wait th)]}
-}
+
+
+
 
 @section{Static Argument Checking}
 
@@ -175,7 +138,7 @@ or, in the worst-case scenario, fork the library.
  The resulting function can still be used as a first-class value, but checking
  only occurs for statically visible uses.
 
- @examples[#:eval (make-adjutor-eval)
+ @examples[#:eval (make-adjutor/unstable-eval)
            (eval:error
             (define/check-args (recur arg)
               (cond
@@ -196,20 +159,13 @@ or, in the worst-case scenario, fork the library.
  facilitating the export of the identifier bound by @racket[define/check-args/contract].
 }
 
+
+
+
+
+
+
 @section{Structures}
-
-@defform[(struct/derived
-          (error-id orig-form ...)
-          id maybe-super (field ...)
-          struct-option ...)
-         #:grammar ([maybe-super (code:line) super-id])]{
- Defines a new structure type like @racket[struct], but
- with syntax errors reported in terms of @racket[(error-id orig-form ...)]
- like @racket[define-struct/derived].
-
- See @racket[struct] for the grammar of @racket[field]
- and @racket[struct-option].
-}
 
 @defform[(structure id maybe-super (field ...)
            option ...)
@@ -274,7 +230,7 @@ or, in the worst-case scenario, fork the library.
   Illegal elsewhere.
   })
 
- @examples[#:eval (make-adjutor-eval)
+ @examples[#:eval (make-adjutor/unstable-eval)
            (require (for-syntax racket/base syntax/parse))
            (structure point (x y z)
              #:transparent
@@ -301,14 +257,20 @@ or, in the worst-case scenario, fork the library.
 
 
 
-@include-section["find-executable-path.scrbl"]
-@include-section["todo.scrbl"]
+
+
+@include-section["unstable/find-executable-path.scrbl"]
+@include-section["unstable/todo.scrbl"]
+
+
+
+
 
 @section{Testing Meta-Language}
-@defmodule[adjutor/test #:lang #:no-declare]
-@declare-exporting[(submod adjutor/test support)]
+@defmodule[adjutor/unstable/test #:lang #:no-declare]
+@declare-exporting[(submod adjutor/unstable/test support)]
 
-The @racketmodname[adjutor/test] meta-language is useful for
+The @racketmodname[adjutor/unstable/test] meta-language is useful for
 files that should only contain a @racket[test] submodule.
 It chains to the following language like @racketmodname[at-exp],
 then transforms the result of the other reader to place the
@@ -319,7 +281,7 @@ the enclosing module so that the REPL is inside the
 @racket[test] submodule.
 
 To a first approximation, this is how a module using
-@(racket #,(hash-lang) #,(racketmodname adjutor/test))
+@(racket #,(hash-lang) #,(racketmodname adjutor/unstable/test))
 is read compared to some host language:
 @(define padding-attribute
    (attributes '([style . "padding:0.5em;"])))
@@ -333,11 +295,11 @@ is read compared to some host language:
                       [() (left top) (left top)])
   (list
    (list ""
-         (racket #,(hash-lang) #,(racketmodname adjutor/test))
+         (racket #,(hash-lang) #,(racketmodname adjutor/unstable/test))
          "Host Language")
    (list "Source "
          (racketblock0
-          #,(hash-lang) #,(racketmodname adjutor/test) lang-spec
+          #,(hash-lang) #,(racketmodname adjutor/unstable/test) lang-spec
           body ...)
          (racketblock0
           #,(hash-lang) lang-spec
@@ -353,7 +315,7 @@ is read compared to some host language:
 
 @margin-note{
  The main differences between the above table and the actual
- implementation of @(racket #,(hash-lang) #,(racketmodname adjutor/test))
+ implementation of @(racket #,(hash-lang) #,(racketmodname adjutor/unstable/test))
  are that a private module language is used instead of
  @racket[racket/base] (to provide a useful @racket[#%top-interaction])
  and that a @racket[configure-runtime] submodule is added.
@@ -361,10 +323,14 @@ is read compared to some host language:
 
 @defform[(#%top-interaction . form)]{
  The @racket[#%top-interaction] installed for the enclosing module
- by @(racket #,(hash-lang) #,(racketmodname adjutor/test))
+ by @(racket #,(hash-lang) #,(racketmodname adjutor/unstable/test))
  is configured to always @racket[enter!] the @racket[test]
  submodule before evaluating @racket[form].
 }
+
+
+
+
 
 @section{Extending @racket[require-provide]}
 
