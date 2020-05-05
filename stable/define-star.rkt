@@ -3,14 +3,11 @@
 (require racket/contract
          (for-syntax racket/base
                      syntax/parse
-                     syntax/define
-                     ))
+                     syntax/define))
 
 (provide define*
          define*/contract
-         def
-         (for-syntax function-header
-                     ))
+         def)
 
 (module+ test
   (require rackunit
