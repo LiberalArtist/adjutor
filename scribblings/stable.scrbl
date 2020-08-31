@@ -68,7 +68,11 @@ This section documents the stable portion of @racketmodname[adjutor].
                 (values k v)]))
            keys
            vals]
-}
+
+ @history[
+ #:changed "0.3.2"
+ @elem{Fixed wrapping of @racket[body-or-break] forms.}
+ ]}
 
 @section{Guarded Evaluation: @racket[when]-like Forms}
 
@@ -145,11 +149,17 @@ This section documents the stable portion of @racketmodname[adjutor].
 
 
 @defthing[ip-port-num/c flat-contract?
-          #:value (integer-in 0 65535)]{
- A contract recognizing legal IP port numbers.
-
+          #:value listen-port-number?]{
+ A flat contract corresponding to @racket[listen-port-number?]
+ from @racketmodname[racket/tcp], which recognizes
+ valid TCP/IP port numbers for @racket[tcp-listen]
+ and related operations: that is, @racket[(integer-in 0 65535)].
+ Currently, @racket[ip-port-num/c] is an alias
+ for @racket[listen-port-number?].
  @(history
    #:added "0.2.1"
+   #:changed "0.3.2"
+   @elem{Became an alias for @racket[listen-port-number?].}
    )}
 
 @defproc[(environment-variables-set* [env environment-variables?]
@@ -256,7 +266,11 @@ This section documents the stable portion of @racketmodname[adjutor].
 
 @defform[(define-aliases [new-id orig-id] ...+)]{
  Short for multiple @racket[define-alias] forms.
-}
+
+ @history[
+ #:changed "0.3.2"
+ @elem{Fixed implementation to accept documented syntax.}
+ ]}
 
 @section{Serialization}
 @deftogether[(@defproc[(serialize-to-string [v serializable?])

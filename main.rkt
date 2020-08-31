@@ -3,7 +3,9 @@
 (require "stable/require-provide.rkt")
 
 (require-provide (provide-only "stable/require-provide.rkt")
-                 "kernel.rkt"
+                 "stable/for.rkt"
+                 "stable/misc.rkt"
+                 "stable/when-unless.rkt"
                  "stable/define-star.rkt"
                  "stable/serialize.rkt"
                  "stable/in-value-star.rkt"

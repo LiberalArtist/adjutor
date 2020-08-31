@@ -19,6 +19,7 @@
  at runtime raises an error (based on the @racket[message]).
 
  If the @;other-doc['(lib "todo-list/scribblings/todo-list.scrbl")]
+ @; FIXME work out indirect link
  @hyperlink["https://pkgs.racket-lang.org/package/todo-list"]{todo-list}
  plugin is installed (via the @tt{todo-list} package),
  DrRacket will also highlight the placeholders specially.

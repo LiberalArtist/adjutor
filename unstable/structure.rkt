@@ -8,8 +8,8 @@
                      syntax/parse
                      racket/struct-info
                      racket/stxparam
-                     racket/contract
-                     "../kernel.rkt"))
+                     "../stable/when-unless.rkt"
+                     racket/contract))
 
 ;; FIXME use the `struct/derived` from `racket/base` in Racket 7.6.
 
