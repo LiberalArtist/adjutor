@@ -9,6 +9,7 @@
          values->list)
 
 (require syntax/parse/define
+         racket/match
          (only-in racket/tcp
                   [listen-port-number? ip-port-num/c])
          (for-syntax racket/base))
@@ -35,8 +36,21 @@
 (define-simple-macro (values->list body:expr ...+)
   (call-with-values (λ () body ...) list))
 
-(define (list->values lst)
-  (apply values lst))
+(define list->values
+  ;; ???? does this help ????
+  (match-lambda
+    ['()
+     (values)]
+    [(list   a)
+     (values a)]
+    [(list   a b)
+     (values a b)]
+    [(list   a b c)
+     (values a b c)]
+    [(list   a b c d)
+     (values a b c d)]
+    [lst
+     (apply values lst)]))
 
 
 
