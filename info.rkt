@@ -3,7 +3,7 @@
 (define pkg-name "adjutor")
 (define collection "adjutor")
 (define pkg-desc "A helper library")
-(define version "0.3.3")
+(define version "0.3.90")
 (define pkg-authors '(philip))
 
 ;; Documentation:
@@ -12,7 +12,7 @@
 
 ;; Dependencies:
 (define deps
-  '(["base" #:version "7.0"]
+  '(["base" #:version "7.6"]
     "static-rename-lib"))
 
 (define build-deps
