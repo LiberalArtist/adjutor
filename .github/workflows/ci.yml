@@ -11,6 +11,7 @@ jobs:
         racket-version:
           - "stable"
           - "current"
+          - "8.0"
           - "7.7"
           - "7.6"
           - "7.5"
@@ -27,7 +28,7 @@ jobs:
         with:
           version: ${{ matrix.racket-version }}
           architecture: "x64"
-          distribution: "minimal"
+          distribution: "full"
       - name: Install Package and its Dependencies
         run: raco pkg install --auto --batch --name $RKT_PKG
       - name: Run Tests
@@ -38,6 +39,7 @@ jobs:
 # NOTES:
 # ------
 # Do I want `--unused-pkg-deps`?
+# Try to build with "minimal" on one job, like "stable" (cs).
 # I would test `racket-variant: "BC"` if I required Racket 8.0.
 # On Travis, I had this:
 ###after_success:
